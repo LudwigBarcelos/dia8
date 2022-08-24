@@ -1,0 +1,36 @@
+El bug está en el  [HttpPost] va sobre public async Task<IActionResult> Index(Usuario user1) para que reciba los datos del POST, y no sobre  public IActionResult Index() que no estárecibiendo nada,
+solo tienen que poner la etiqueta en este orden y ya funciona
+ public IActionResult Index()
+        {
+            return View();
+        }
+        [HttpPost]
+        public async Task<IActionResult> Index(Usuario user1)
+        {
+            Datos_Logica _datos_usuario = new Datos_Logica();
+            var usuario = _datos_usuario.ValidaUsuario(user1.Usuario1, user1.Passwd);
+            if (usuario != null)
+            {
+                var claims = new List<Claim> {
+                    new Claim(ClaimTypes.Name,usuario.Usuario1),
+                    new Claim("Passwd",usuario.Passwd)
+                };
+                //foreach (string rol in usuario.TipoUsuario)
+                //{
+                //    claims.Add(new Claim(ClaimTypes.Role, rol));
+                //}
+                var claimIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimIdentity));
+
+                return RedirectToAction("Index", "Home");
+            }
+            else
+            {
+                return View();
+            }
+        }
+        public async Task<IActionResult> Salir()
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction("Index", "Acceso");
+        }
